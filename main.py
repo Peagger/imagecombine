@@ -1,5 +1,5 @@
 import cv2
-from cv2 import imread,cvtColor,imshow,waitKey,pyrDown,pyrUp,subtract,add
+from cv2 import imread,cvtColor,imshow,waitKey,pyrDown,pyrUp,subtract,add,bitwise_not,bitwise_and
 import numpy as np
 
 class Cv():
@@ -51,27 +51,60 @@ def lp2gp(lp):
         g=add(src1,src2)
         gp.append(g)
     return gp
-
+def masked(src1,src2):
+    '''图像金字塔与掩模金字塔相乘'''
+    layer=len(src1)
+    dst=[]
+    for i in range(layer):
+        r=bitwise_and(src1[i],src2[i])
+        dst.append(r)
+    return dst
+def addimgae(src1,src2):
+    '''图像金字塔相加'''
+    layer=len(src1)
+    dst=[]
+    for i in range(layer):
+        r=add(src1[i],src2[i])
+        dst.append(r)
+    return dst
 if __name__=='__main__':
-    im1=imread('1.jpg')
+    layer=4 #高斯金字塔层数
+    
+    '''输入图像'''
+    im1=imread('1.jpg')#掩模
     im2=imread('2.png')
+    mask=imread('3.jpg')
+   
+    '''将RGB转化为灰度图像'''
     gray1=cvtColor(im1,cv2.COLOR_BGR2GRAY)
     gray2=cvtColor(im2,cv2.COLOR_BGR2GRAY)
-    layer=4 #高斯金字塔层数
+    mask=cvtColor(mask,cv2.COLOR_BGR2GRAY)
+    opmask=bitwise_not(mask)
+
+    '''生成高斯金字塔'''
     gp1=gengp(gray1,4)
     gp2=gengp(gray2,4)
+    gpmask=gengp(mask,4)
+    gpopmask=gengp(opmask,4)
 
+    '''生成图像的拉普拉斯金字塔'''
     lp1=genlp(gp1)
     lp2=genlp(gp2)
     
-    newgp1=lp2gp(lp1)
-    newgp2=lp2gp(lp2)
+    '''拉普拉斯金字塔与掩模高斯金字塔相乘'''
+    m1=masked(gpopmask[::-1],lp1)
+    m2=masked(gpmask[::-1],lp2)
+    
+    '''图像的拉普拉斯金字塔相加后还原高斯金字塔'''
+    combine=addimgae(m1,m2)
+    newgp=lp2gp(combine)
+    
     print('金字塔生成成功')
     
     for i in range(layer):
-        imshow('gp',gp1[len(gp1)-1-i])
-        imshow('lp',newgp1[i])
-        imshow('new',lp1[i])
+        # imshow('gp',gp1[len(gp1)-1-i])
+        # imshow('lp',lp1[i])
+        imshow('new',newgp[i])
         waitKey(2000)
         cv2.destroyAllWindows()
     
