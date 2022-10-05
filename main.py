@@ -14,7 +14,7 @@ def min(x,y):
         return y
     return x
 
-def sameSize(img1, img2):#受奇偶性影响,上采样可能shape有1的差异
+def sameSize(img1, img2):#受奇偶性影响,上采样可能shape有差异
     row1, col1 = img1.shape
     row2, col2 = img2.shape
     rows,cols=min(row1,row2),min(col1,col2)
@@ -56,7 +56,7 @@ def masked(src1,src2):
     layer=len(src1)
     dst=[]
     for i in range(layer):
-        r=bitwise_and(src1[i],src2[i])
+        r=bitwise_and(src1[i],src2[i])#与掩模做与运算
         dst.append(r)
     return dst
 def addimgae(src1,src2):
@@ -68,7 +68,7 @@ def addimgae(src1,src2):
         dst.append(r)
     return dst
 if __name__=='__main__':
-    layer=4 #高斯金字塔层数
+    layer=6 #高斯金字塔层数
     
     '''输入图像'''
     im1=imread('1.jpg')#掩模
@@ -79,13 +79,13 @@ if __name__=='__main__':
     gray1=cvtColor(im1,cv2.COLOR_BGR2GRAY)
     gray2=cvtColor(im2,cv2.COLOR_BGR2GRAY)
     mask=cvtColor(mask,cv2.COLOR_BGR2GRAY)
-    opmask=bitwise_not(mask)
+    opmask=bitwise_not(mask)#非运算
 
     '''生成高斯金字塔'''
-    gp1=gengp(gray1,4)
-    gp2=gengp(gray2,4)
-    gpmask=gengp(mask,4)
-    gpopmask=gengp(opmask,4)
+    gp1=gengp(gray1,layer)
+    gp2=gengp(gray2,layer)
+    gpmask=gengp(mask,layer)
+    gpopmask=gengp(opmask,layer)
 
     '''生成图像的拉普拉斯金字塔'''
     lp1=genlp(gp1)
@@ -99,12 +99,14 @@ if __name__=='__main__':
     combine=addimgae(m1,m2)
     newgp=lp2gp(combine)
     
-    print('金字塔生成成功')
-    
+
+    '''展示结果'''
     for i in range(layer):
         # imshow('gp',gp1[len(gp1)-1-i])
         # imshow('lp',lp1[i])
         imshow('new',newgp[i])
+        filename='res{}.png'.format(str(i))
+        cv2.imwrite(filename,newgp[i])
         waitKey(2000)
         cv2.destroyAllWindows()
     
